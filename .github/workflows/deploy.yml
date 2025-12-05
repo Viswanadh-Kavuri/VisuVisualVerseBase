@@ -1,0 +1,67 @@
+name: Deploy full stack to AWS
+
+on:
+  push:
+    branches:
+      - main    # run on pushes to main
+    paths:
+      - 'infra/**'
+      - 'lambda/**'
+      - 'frontend/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js for frontend + CDK
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 3. Set up Java for Lambda build
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 4. Configure AWS credentials (from GitHub secrets)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 5. Build the Java Lambda JAR
+      - name: Build Lambda
+        working-directory: ./lambda
+        run: |
+          mvn -B clean package
+
+      # 6. Build the React frontend
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      # 7. Install CDK dependencies and compile TypeScript
+      - name: Build CDK app
+        working-directory: ./infra
+        run: |
+          npm ci
+          npm run build
+
+      # 8. Deploy CDK stack (Lambda + API + DynamoDB + S3 + CloudFront + Route 53)
+      - name: CDK deploy
+        working-directory: ./infra
+        run: |
+          npx cdk deploy VisuVisualVerseStack --require-approval never

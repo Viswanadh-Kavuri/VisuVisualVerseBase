@@ -1,0 +1,10 @@
+{
+  "acknowledged-issue-numbers": [
+    6496,
+    34892
+  ],
+  "hosted-zone:account=122441749594:domainName=visuvisualverse.com:region=us-east-1": {
+    "Id": "/hostedzone/Z0184641JL7PGA21UAHG",
+    "Name": "visuvisualverse.com."
+  }
+}
